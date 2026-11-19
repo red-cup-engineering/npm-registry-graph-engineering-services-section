@@ -1,0 +1,42 @@
+{
+  "name": "@red-cup-engineering/npm-registry-graph-engineering-services-section",
+  "version": "0.6.5-dev.0",
+  "description": "Derives deterministic dependency, history, and witness graphs from an npm registry and renders the dependency or history tier as Graphviz DOT. Use when asking what package releases depend on, replace, or witness without publishing or serving a registry.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/npm-registry-graph-engineering-services-section.git"
+  },
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": "./src/registry-graph.mjs",
+  "bin": {
+    "render-npm-registry-graph": "scripts/render-registry-graph.mjs"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "package.json"
+  ],
+  "scripts": {
+    "check": "check-package-syntax"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@red-cup-engineering/cryptographic-computer-data-engineering-services-section": "^0.3.5",
+    "@red-cup-engineering/npm-registry-query-service": "^0.3.2",
+    "semver": "^7.8.5"
+  },
+  "devDependencies": {
+    "@red-cup-engineering/jsnode-package-engineering-services-section": "^0.6.2"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
+}
