@@ -10,7 +10,7 @@ import { sha256Digest, sha256Hex } from "@red-cup-engineering/cryptographic-comp
 // two legs — the package surface (name@version) and the content-addressable
 // integrity digest — as separate coordinates, never merged.
 const GRAPH_TYPE = "NpmRegistryGraph";
-const RECORD_TYPE = "SemioticVoxelPackageRegistryReceipt";
+const RECEIPT_TYPE = "SemioticVoxelPackageRegistryReceipt";
 const DEPENDENCY_RELATIONS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
 function packageSurface(name, version) {
@@ -110,19 +110,19 @@ export async function deriveRegistryGraph({ registryRoot, registryUrl, packages,
   const source = openNpmRegistryQuerySource({ registryRoot, registryUrl, fetchImplementation });
   const metadataCache = new Map();
 
-  let record = null;
-  let recordSha256 = null;
+  let receipt = null;
+  let receiptSha256 = null;
   let entries;
   if (packages === undefined) {
-    const recordDocument = await source.receipt();
-    if (recordDocument === null) throw new Error("registry has no build receipt; pass an explicit `packages` list for registries that are not ours");
-    const recordBytes = recordDocument.bytes;
-    record = recordDocument.value;
-    if (record?.type !== RECORD_TYPE || !Array.isArray(record.packages) || !Array.isArray(record.scopes)) {
+    const receiptDocument = await source.receipt();
+    if (receiptDocument === null) throw new Error("registry has no build receipt; pass an explicit `packages` list for registries that are not ours");
+    const receiptBytes = receiptDocument.bytes;
+    receipt = receiptDocument.value;
+    if (receipt?.type !== RECEIPT_TYPE || !Array.isArray(receipt.packages) || !Array.isArray(receipt.scopes)) {
       throw new Error("registry has no recognized build receipt; pass an explicit `packages` list for registries that are not ours");
     }
-    recordSha256 = sha256Digest(recordBytes);
-    entries = [...record.packages];
+    receiptSha256 = sha256Digest(receiptBytes);
+    entries = [...receipt.packages];
   } else {
     if (!Array.isArray(packages) || packages.length === 0) throw new TypeError("`packages` must be a non-empty array");
     entries = [];
@@ -142,7 +142,7 @@ export async function deriveRegistryGraph({ registryRoot, registryUrl, packages,
       });
     }
   }
-  const ownedScopes = new Set(internalScopes ?? record?.scopes ?? []);
+  const ownedScopes = new Set(internalScopes ?? receipt?.scopes ?? []);
 
   entries.sort((a, b) =>
     packageSurface(a.name, a.version).localeCompare(packageSurface(b.name, b.version)),
@@ -296,8 +296,8 @@ export async function deriveRegistryGraph({ registryRoot, registryUrl, packages,
 
   return Object.freeze({
     type: GRAPH_TYPE,
-    registry: record?.registry ?? source.registry,
-    receiptSha256: recordSha256,
+    registry: receipt?.registry ?? source.registry,
+    receiptSha256,
     scopes: Object.freeze([...ownedScopes].sort()),
     nodes: Object.freeze(nodes.map((node) => Object.freeze({
       address: node.address,
@@ -309,14 +309,14 @@ export async function deriveRegistryGraph({ registryRoot, registryUrl, packages,
     tiers: Object.freeze({
       dependency: Object.freeze({ edges: Object.freeze(dependencyEdges) }),
       history: Object.freeze({
-        predecessor: record?.predecessor ?? null,
-        reaction: record?.reaction ?? null,
-        receiptVersion: record === null ? null : record.version ?? 1,
+        predecessor: receipt?.predecessor ?? null,
+        reaction: receipt?.reaction ?? null,
+        receiptVersion: receipt === null ? null : receipt.version ?? 1,
         edges: Object.freeze(supersessionEdges),
       }),
       witness: Object.freeze({
-        receiptSha256: recordSha256,
-        compute: record?.compute ?? null,
+        receiptSha256,
+        compute: receipt?.compute ?? null,
         artifacts: Object.freeze(nodes.map((node) => Object.freeze({
           packageSurface: node.address.packageSurface,
           artifact: node.receiptEntry.artifact,
